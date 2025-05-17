@@ -1,0 +1,117 @@
+import json
+import socket
+
+from game.game import Game
+from game.guess import Guess
+from service.interface import Interface
+from log import logger
+from game.pokermind import PokerMind
+from game.card import Card
+from game.suit import Suit
+from game.rank import Rank
+
+
+_BUFFER_SIZE = 1024
+
+
+def run_function(connection: socket, skeleton: "Skeleton"):
+    data = json.loads(connection.recv(_BUFFER_SIZE).decode("utf-8"))
+
+    action = data.get("action")
+
+    ok = True
+    try:
+        match action:
+            case "show":
+                result: Game = skeleton.show()
+
+                logger.info(f"{connection.getpeername()} show")
+            case "reveal":
+                result: Card = skeleton.reveal()
+
+                logger.info(f"{connection.getpeername()} reveal")
+            case "guess":
+                card_object: dict = data.get("card")
+
+                rank = Rank.by_value(card_object.get("rank"))
+                suit = Suit.by_value(card_object.get("suit"))
+
+                card = Card(rank, suit)
+
+                result: Guess = skeleton.guess(card)
+
+                logger.info(f"{connection.getpeername()} guess {card} -> {result.name}")
+            case "new_game":
+                logger.info(f"{connection.getpeername()} new_game")
+
+                result: Game = skeleton.new_game()
+            case _:
+                raise ValueError
+    except (ValueError, KeyError):
+        ok = False
+        result = ...
+
+    if isinstance(result, Game):
+        response = {
+            "player1": [
+                {
+                    "rank": card.rank.representation,
+                    "suit": card.suit.representation,
+                } for card in result.player1
+            ],
+            "player2": [
+                {
+                    "rank": card.rank.representation,
+                    "suit": card.suit.representation,
+                } for card in result.player2
+            ],
+            "round1": {"result": result.round1.name, "value": result.round1.value},
+            "round2": {"result": result.round2.name, "value": result.round2.value},
+        }
+    elif isinstance(result, Card):
+        response = {"card": {
+            "rank": result.rank.representation,
+            "suit": result.suit.representation,
+        }}
+    elif isinstance(result, Guess):
+        response = {"result": result.name, "value": result.value}
+    else:
+        response = {}
+
+    payload = json.dumps({"ok": ok, "data": response}).encode("utf-8")
+
+    connection.send(payload)
+    
+    connection.close()
+
+
+class Skeleton(Interface):
+    def __init__(self, port: int, service: PokerMind):
+        self.port = port
+        self.service = service
+
+    def show(self) -> Game:
+        return self.service.show()
+
+    def reveal(self) -> Card:
+        return self.service.reveal()
+
+    def guess(self, card) -> Guess:
+        return self.service.guess(card)
+
+    def new_game(self) -> Game:
+        return self.service.new_game()
+
+    def run(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(("127.0.0.1", self.port))
+        s.listen(1)
+
+        logger.info(f"Listening on {s.getsockname()}")
+        self.service.new_game()
+
+        while True:
+            connection, address = s.accept()
+
+            run_function(connection, self)
