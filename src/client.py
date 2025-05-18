@@ -42,8 +42,6 @@ def main():
     match getattr(args, "action", None):
         case "show":
             ok, data = proxy.show()
-
-            data = json.dumps(data, indent=4)
         case "reveal":
             ok, data = proxy.reveal()
         case "new_game":
