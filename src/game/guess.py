@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class Guess(Enum):
-    WRONG   = -1
-    PARTIAL = +0
-    CORRECT = +1
+    WRONG   = 0
+    PARTIAL = 1
+    CORRECT = 2

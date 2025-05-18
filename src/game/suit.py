@@ -2,14 +2,15 @@ from enum import Enum
 
 
 class Suit(Enum):
-    HEARTS   = "hearts",   '♥', 4
-    DIAMONDS = "diamonds", '♦', 3
-    CLUBS    = "clubs",    '♣', 2
-    SPADES   = "spades",   '♠', 1
+    HEARTS   = "hearts",   '♥', 0, 3
+    DIAMONDS = "diamonds", '♦', 1, 2
+    CLUBS    = "clubs",    '♣', 2, 1
+    SPADES   = "spades",   '♠', 3, 0
 
-    def __init__(self, representation: str, symbol: str, order: int):
+    def __init__(self, representation: str, symbol: str, numeric_value: int, order: int):
         self.representation = representation
         self.symbol = symbol
+        self.numeric_value = numeric_value
         self.order = order
 
     @classmethod
