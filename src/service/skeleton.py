@@ -55,14 +55,26 @@ def run_function(connection: socket, skeleton: "Skeleton"):
         response = {
             "player1": [
                 {
-                    "rank": card.rank.representation,
-                    "suit": card.suit.representation,
+                    "rank": {
+                        "result": card.rank.representation,
+                        "value": card.rank.numeric_value
+                    },
+                    "suit": {
+                        "result": card.suit.representation,
+                        "value": card.suit.numeric_value,
+                    },
                 } for card in result.player1
             ],
             "player2": [
                 {
-                    "rank": card.rank.representation,
-                    "suit": card.suit.representation,
+                    "rank": {
+                        "result": card.rank.representation,
+                        "value": card.rank.numeric_value
+                    },
+                    "suit": {
+                        "result": card.suit.representation,
+                        "value": card.suit.numeric_value,
+                    },
                 } for card in result.player2
             ],
             "round1": {"result": result.round1.name, "value": result.round1.value},
@@ -70,8 +82,14 @@ def run_function(connection: socket, skeleton: "Skeleton"):
         }
     elif isinstance(result, Card):
         response = {"card": {
-            "rank": result.rank.representation,
-            "suit": result.suit.representation,
+            "rank": {
+                "result": result.rank.representation,
+                "value": result.rank.numeric_value
+            },
+            "suit": {
+                "result": result.suit.representation,
+                "value": result.suit.numeric_value,
+            },
         }}
     elif isinstance(result, Guess):
         response = {"result": result.name, "value": result.value}
