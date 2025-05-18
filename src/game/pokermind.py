@@ -13,7 +13,7 @@ from log import logger
 
 
 class PokerMind:
-    # threshold = [4..40]
+    # threshold = [4..31]
     def __init__(self, threshold: int = 4):
         self.threshold = threshold
 
