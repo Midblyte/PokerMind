@@ -40,8 +40,8 @@ class Proxy(Interface):
         return self._request(
             action="guess",
             card=dict(
-                rank=repr(card.rank),
-                suit=repr(card.suit)
+                rank=card.rank.representation,
+                suit=card.suit.representation
             )
         )
 
