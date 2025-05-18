@@ -11,7 +11,7 @@ class Interface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def guess(self, *inputs):
+    def guess(self, card):
         raise NotImplementedError
 
     @abstractmethod
