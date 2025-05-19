@@ -3,7 +3,7 @@ name = "pokermind"
 version = "0.2.0"
 description = "PokerMind Client-Server"
 readme = "README.md"
-authors = [{"name" = "Midblyte"}, {"name" = "AngelogyPythITA"}]
+authors = [{"name" = "Midblyte"}, {"name" = "AngelogyPythITA"}, {"name" = "Sauz926"}]
 requires-python = ">=3.12"
 dependencies = []
 
