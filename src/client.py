@@ -24,7 +24,8 @@ def main():
     reveal_parser = subparsers.add_parser("reveal")
     reveal_parser.set_defaults(action="reveal")
 
-    reveal_parser.add_argument("--training-mode", "-T", action="store_true", help="output as CSV and create a new game")
+    reveal_parser.add_argument("--training-mode", "-T", type=int, const=100, default=False, nargs='?', metavar="ITERATIONS", help="output as CSV and create a new game", dest="training")
+    reveal_parser.add_argument("--numerical", action="store_true", help="numerical output (requires training mode)")
 
     guess_parser = subparsers.add_parser("guess")
     guess_parser.set_defaults(action="guess")
@@ -45,10 +46,14 @@ def main():
         case "show":
             ok, data = proxy.show()
         case "reveal":
-            if args.training_mode:
-                ok = training(proxy)
+            if (iterations := args.training) is not False:
+                for _ in range(iterations):
+                    ok = training(proxy, args.numerical)
 
-                exit(0 if ok else 1)
+                    if not ok:
+                        exit(1)
+                else:
+                    exit(0)
             else:
                 ok, data = proxy.reveal()
         case "new_game":
@@ -69,13 +74,15 @@ def main():
     exit(0 if ok else 1)
 
 
-def training(proxy: Proxy) -> bool:
+def training(proxy: Proxy, numerical: bool) -> bool:
     ok_reveal,   data_reveal   = proxy.reveal()
     ok_show,     data_show     = proxy.show()
     ok_new_game, data_new_game = proxy.new_game()
 
     if not (ok_reveal and ok_show and ok_new_game):
         return False
+
+    key = "value" if numerical else "result"
 
     print(','.join(map(str, [
         # Input
@@ -86,31 +93,31 @@ def training(proxy: Proxy) -> bool:
         #   for n in range(4)
         #   for kind in ("rank", "suit")
 
-        data_show["player1"][0]["rank"]["value"],
-        data_show["player1"][0]["suit"]["value"],
-        data_show["player1"][1]["rank"]["value"],
-        data_show["player1"][1]["suit"]["value"],
-        data_show["player1"][2]["rank"]["value"],
-        data_show["player1"][2]["suit"]["value"],
-        data_show["player1"][3]["rank"]["value"],
-        data_show["player1"][3]["suit"]["value"],
+        data_show["player1"][0]["rank"][key],
+        data_show["player1"][0]["suit"][key],
+        data_show["player1"][1]["rank"][key],
+        data_show["player1"][1]["suit"][key],
+        data_show["player1"][2]["rank"][key],
+        data_show["player1"][2]["suit"][key],
+        data_show["player1"][3]["rank"][key],
+        data_show["player1"][3]["suit"][key],
 
-        data_show["player2"][0]["rank"]["value"],
-        data_show["player2"][0]["suit"]["value"],
-        data_show["player2"][1]["rank"]["value"],
-        data_show["player2"][1]["suit"]["value"],
-        data_show["player2"][2]["rank"]["value"],
-        data_show["player2"][2]["suit"]["value"],
-        data_show["player2"][3]["rank"]["value"],
-        data_show["player2"][3]["suit"]["value"],
+        data_show["player2"][0]["rank"][key],
+        data_show["player2"][0]["suit"][key],
+        data_show["player2"][1]["rank"][key],
+        data_show["player2"][1]["suit"][key],
+        data_show["player2"][2]["rank"][key],
+        data_show["player2"][2]["suit"][key],
+        data_show["player2"][3]["rank"][key],
+        data_show["player2"][3]["suit"][key],
 
-        data_show["round1"]["value"],
-        data_show["round2"]["value"],
+        data_show["round1"][key],
+        data_show["round2"][key],
 
         # Output
 
-        data_reveal["card"]["rank"]["value"],
-        data_reveal["card"]["suit"]["value"]
+        data_reveal["card"]["rank"][key],
+        data_reveal["card"]["suit"][key]
     ])))
 
     return True
