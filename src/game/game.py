@@ -6,7 +6,7 @@ from game.hand import Hand
 
 
 class Game:
-    def __init__(self, player1: tuple[Card], player2: tuple[Card], card: Card):
+    def __init__(self, player1: tuple[Card, ...], player2: tuple[Card, ...], card: Card):
         self.player1 = player1
         self.player2 = player2
         self.card = card
