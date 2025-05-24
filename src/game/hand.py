@@ -41,7 +41,7 @@ _ROYAL_FLUSHES: dict[Suit, set[Card]] = {
 
 class Hand:
     def __init__(self, *cards: Unpack[Card]):
-        self.cards = tuple(cards)
+        self.cards = frozenset(cards)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Hand):
@@ -79,23 +79,22 @@ class Hand:
 
     @staticmethod
     @cache
-    def _catalog(cards: set[Card]) -> tuple[HandRanking, tuple[Card], int]:
-        selection = set(cards)
-        at_least_five: bool = len(selection) >= 5
+    def _catalog(cards: frozenset[Card]) -> tuple[HandRanking, tuple[Card], int]:
+        if (number_of_cards := len(cards)) == 0:
+            raise ValueError
+
+        at_least_five: bool = number_of_cards >= 5
 
         # Highest to lowest
-        by_number: list[Card] = list(sorted(selection, key=lambda card: card.rank.comparation_value, reverse=True))
-        by_value:  list[Card] = list(sorted(selection, key=lambda card: card.rank.numeric_value    , reverse=True))
-
-        if len(by_number) == 0:
-            raise ValueError
+        # noinspection PyTypeChecker
+        by_value: tuple[Card] = tuple(sorted(cards, key=lambda card: card.rank.numeric_value, reverse=True))
 
         if at_least_five:
             # 1. Royal flush
             for suit in Suit:
                 royal_flush_set: set = _ROYAL_FLUSHES[suit]
 
-                if all((card in selection for card in royal_flush_set)):
+                if all((card in cards for card in royal_flush_set)):
                     royal_flush = tuple(sorted(royal_flush_set, key=lambda k: k.rank.numeric_value, reverse=True))
 
                     # noinspection PyTypeChecker
@@ -106,7 +105,7 @@ class Hand:
                 streak = []
                 max_rank: Rank = ...
                 for rank in reversed(tuple(Rank)):
-                    if (this := Card(rank=rank, suit=suit)) in selection:
+                    if (this := Card(rank=rank, suit=suit)) in cards:
                         if len(streak) == 0:
                             max_rank = rank
 
@@ -124,7 +123,7 @@ class Hand:
         for rank in sorted(list(Rank), reverse=True):
             four_of_a_kind: tuple = tuple(Card(rank=rank, suit=suit) for suit in Suit)
 
-            if all((card in selection for card in four_of_a_kind)):
+            if all((card in cards for card in four_of_a_kind)):
                 return HandRanking.FOUR_OF_A_KIND, four_of_a_kind, rank.numeric_value
 
         count = []  # A, K, Q, ..., 3, 2
@@ -173,7 +172,7 @@ class Hand:
             max_rank: Rank = ...
             for rank in reversed(tuple(Rank)):
                 for suit in Suit:
-                    if (this := Card(rank=rank, suit=suit)) in selection:
+                    if (this := Card(rank=rank, suit=suit)) in cards:
                         if len(streak) == 0:
                             max_rank = rank
 
@@ -212,7 +211,7 @@ class Hand:
             return HandRanking.PAIR, twos, 12-two_index
 
         # 10. High Card
-        high_card: Card = by_number.pop(0)
+        high_card: Card = reduce(lambda prev, next: prev if prev > next else next, cards)
         return HandRanking.HIGH_CARD, (high_card, ), high_card.rank.numeric_value
 
     def _analyse(self) -> tuple[HandRanking, set[Card], int, tuple[Card]]:
