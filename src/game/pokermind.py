@@ -71,7 +71,13 @@ class PokerMind:
 
             process.join()
         else:
-            raise RuntimeError("Time out")
+            logger.warning(f"Timed out, lowering threshold from {self.threshold} to {self.threshold - 1}")
+
+            self.threshold -= 1
+
+            self.lock.release()
+
+            return self.new_game()
 
         end = time.time()
         logger.info(f"Done! ({end - start:.3} s)")
