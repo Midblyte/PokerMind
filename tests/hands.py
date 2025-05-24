@@ -1,7 +1,8 @@
 import unittest
 
 from game.card import Card
-from game.hand import HandRanking, Hand
+from game.hand import Hand
+from game.handranking import HandRanking
 from game.rank import Rank
 from game.suit import Suit
 
