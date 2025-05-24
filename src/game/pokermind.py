@@ -1,14 +1,22 @@
-import multiprocessing
 import os
+import sys
 import time
 from random import sample as random_sample
-from multiprocessing import Process, Queue, Lock
+
+from log import logger
+# noinspection PyUnresolvedReferences, PyProtectedMember
+if sys.implementation.name == "pypy" or sys.version_info > (3, 14) or (sys.version_info > (3, 12) and sys._is_gil_enabled()):  # No GIL
+    logger.debug("Using threading (assuming no GIL)")
+    from threading import Thread as Task, Lock
+else:
+    logger.debug("Using multiprocessing (assuming GIL)")
+    from multiprocessing import Process as Task, Lock
+from multiprocessing import Queue
 from typing import Optional
 
 from game.card import Card, DECK
 from game.game import Game
 from game.guess import Guess
-from log import logger
 
 
 class PokerMind:
@@ -16,9 +24,16 @@ class PokerMind:
     def __init__(self, threshold: int = 4):
         self.threshold = threshold
 
+        self.limit = min(self.threshold, os.cpu_count())
+        self.games: Queue[Game] = Queue(self.limit)
         self.lock = Lock()
 
         self.game: Game = ...
+
+        for i in range(self.limit):
+            t = Task(target=self._generator, name=f"Generator_{i}")
+            t.daemon = True
+            t.start()
 
     def show(self) -> Game:
         with self.lock:
@@ -41,47 +56,28 @@ class PokerMind:
             return Guess.PARTIAL
 
     def new_game(self) -> Game:
-        logger.info("Generating...")
-        start = time.time()
+        self.game = self.games.get()
 
-        self.lock.acquire()
+        logger.debug(repr(self.game))
 
-        processes: list[Process] = []
-        queue: Queue = Queue()
+        return self.game
 
-        for i in range(min(self.threshold, os.cpu_count())):
-            process = multiprocessing.Process(target=self._find, args=(queue, ), name=f"Finder_{i}")
-            processes.append(process)
-            process.start()
+    def _generator(self):
+        while True:
+            # logger.info("Generating...")
+            start = time.time()
 
-        for process in processes:
-            if (game := queue.get()) is not None:
-                for p in processes:
-                    p.terminate()
+            while (game := self._find()) is None:
+                logger.warning(f"Timed out, lowering threshold from {self.threshold} to {self.threshold - 1}")
 
-                break
+                self.threshold -= 1
 
-            process.join()
-        else:
-            logger.warning(f"Timed out, lowering threshold from {self.threshold} to {self.threshold - 1}")
+            end = time.time()
+            logger.info(f"Generation done! ({end - start:.3} s)")
 
-            self.threshold -= 1
+            self.games.put(game)
 
-            self.lock.release()
-
-            return self.new_game()
-
-        end = time.time()
-        logger.info(f"Done! ({end - start:.3} s)")
-
-        self.game = game
-        self.lock.release()
-
-        logger.debug(repr(game))
-
-        return game
-
-    def _find(self, queue: Queue, iterations: int = 5000) -> Optional[Game]:
+    def _find(self, iterations: int = 5000) -> Optional[Game]:
         for i in range(iterations):
             sample = random_sample(DECK, 9)
 
@@ -96,8 +92,6 @@ class PokerMind:
             hands = game.hand1round1, game.hand1round2, game.hand2round1, game.hand2round2
 
             if sum(map(lambda h: h.ranking.value, hands)) >= self.threshold and game.round1 != game.round2:
-                queue.put(game)
-
                 return game
         else:
             return None
