@@ -2,8 +2,7 @@ import multiprocessing
 import os
 import time
 from random import sample as random_sample, shuffle as random_shuffle
-from multiprocessing import Process, Queue
-from threading import Lock
+from multiprocessing import Process, Queue, Lock
 from typing import Optional
 
 from game.card import Card, DECK
