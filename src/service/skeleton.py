@@ -123,7 +123,11 @@ class Skeleton(Interface):
     def run(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(("127.0.0.1", self.port))
+        try:
+            s.bind(("127.0.0.1", self.port))
+        except OSError as error:
+            logger.error("Bind error", exc_info=error)
+            exit(1)
         s.listen(1)
 
         logger.info(f"Listening on {s.getsockname()}")
