@@ -67,7 +67,7 @@ class Hand:
                 Card(rank=Rank.TEN,   suit=suit),
             )
 
-            if all((card in by_number for card in royal_flush)):
+            if all((card in selection for card in royal_flush)):
                 return HandRanking.ROYAL_FLUSH, royal_flush, 0
 
         # 2. Straight flush
@@ -75,7 +75,7 @@ class Hand:
             streak = []
             max_rank: Rank = ...
             for rank in reversed(tuple(Rank)):
-                if (this := Card(rank=rank, suit=suit)) in by_number:
+                if (this := Card(rank=rank, suit=suit)) in selection:
                     if len(streak) == 0:
                         max_rank = rank
 
@@ -93,7 +93,7 @@ class Hand:
         for rank in sorted(list(Rank), reverse=True):
             four_of_a_kind: tuple = tuple(Card(rank=rank, suit=suit) for suit in Suit)
 
-            if all((card in by_number for card in four_of_a_kind)):
+            if all((card in selection for card in four_of_a_kind)):
                 return HandRanking.FOUR_OF_A_KIND, four_of_a_kind, rank.numeric_value
 
         # 4. Full House
@@ -141,7 +141,7 @@ class Hand:
         max_rank: Rank = ...
         for rank in reversed(tuple(Rank)):
             for suit in Suit:
-                if (this := Card(rank=rank, suit=suit)) in by_number:
+                if (this := Card(rank=rank, suit=suit)) in selection:
                     if len(streak) == 0:
                         max_rank = rank
 
