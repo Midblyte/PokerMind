@@ -218,7 +218,7 @@ class Hand:
         ranking, cards, value = Hand._catalog(self.cards)
 
         # noinspection PyTypeChecker
-        kickers: tuple[Card] = tuple(sorted((card for card in self.cards if card not in cards), reverse=True))
+        kickers: tuple[Card] = tuple(sorted((card for card in self.cards if card not in cards), key=lambda c: c.rank, reverse=True))
 
         return ranking, cards, value, kickers
 
