@@ -81,6 +81,7 @@ class Hand:
     @cache
     def _catalog(cards: set[Card]) -> tuple[HandRanking, tuple[Card], int]:
         selection = set(cards)
+        at_least_five: bool = len(selection) >= 5
 
         # Highest to lowest
         by_number: list[Card] = list(sorted(selection, key=lambda card: card.rank.comparation_value, reverse=True))
@@ -89,34 +90,35 @@ class Hand:
         if len(by_number) == 0:
             raise ValueError
 
-        # 1. Royal flush
-        for suit in Suit:
-            royal_flush_set: set = _ROYAL_FLUSHES[suit]
+        if at_least_five:
+            # 1. Royal flush
+            for suit in Suit:
+                royal_flush_set: set = _ROYAL_FLUSHES[suit]
 
-            if all((card in selection for card in royal_flush_set)):
-                royal_flush = tuple(sorted(royal_flush_set, key=lambda k: k.rank.numeric_value, reverse=True))
+                if all((card in selection for card in royal_flush_set)):
+                    royal_flush = tuple(sorted(royal_flush_set, key=lambda k: k.rank.numeric_value, reverse=True))
 
-                # noinspection PyTypeChecker
-                return HandRanking.ROYAL_FLUSH, royal_flush, 0
+                    # noinspection PyTypeChecker
+                    return HandRanking.ROYAL_FLUSH, royal_flush, 0
 
-        # 2. Straight flush
-        for suit in Suit:
-            streak = []
-            max_rank: Rank = ...
-            for rank in reversed(tuple(Rank)):
-                if (this := Card(rank=rank, suit=suit)) in selection:
-                    if len(streak) == 0:
-                        max_rank = rank
+            # 2. Straight flush
+            for suit in Suit:
+                streak = []
+                max_rank: Rank = ...
+                for rank in reversed(tuple(Rank)):
+                    if (this := Card(rank=rank, suit=suit)) in selection:
+                        if len(streak) == 0:
+                            max_rank = rank
 
-                    streak.append(this)
+                        streak.append(this)
 
-                    if len(streak) == 5:
-                        # noinspection PyTypeChecker
-                        return HandRanking.STRAIGHT_FLUSH, tuple(streak), max_rank.numeric_value
+                        if len(streak) == 5:
+                            # noinspection PyTypeChecker
+                            return HandRanking.STRAIGHT_FLUSH, tuple(streak), max_rank.numeric_value
 
-                else:
-                    streak = []
-                    max_rank = ...
+                    else:
+                        streak = []
+                        max_rank = ...
 
         # 3. Four of a kind
         for rank in sorted(list(Rank), reverse=True):
@@ -125,7 +127,6 @@ class Hand:
             if all((card in selection for card in four_of_a_kind)):
                 return HandRanking.FOUR_OF_A_KIND, four_of_a_kind, rank.numeric_value
 
-        # 4. Full House
         count = []  # A, K, Q, ..., 3, 2
         ranks: list[Rank] = [card.rank for card in by_value]
 
@@ -135,54 +136,56 @@ class Hand:
         three_index = count.index(3) if 3 in count else -1
         two_index = count.index(2) if 2 in count else -1
 
-        if three_index >= 0 and two_index >= 0:
-            threes = tuple(filter(lambda card: card.rank.numeric_value == 14 - three_index, by_value))
-            twos   = tuple(filter(lambda card: card.rank.numeric_value == 14 - two_index  , by_value))
+        if at_least_five:
+            # 4. Full House
+            if three_index >= 0 and two_index >= 0:
+                threes = tuple(filter(lambda card: card.rank.numeric_value == 14 - three_index, by_value))
+                twos   = tuple(filter(lambda card: card.rank.numeric_value == 14 - two_index  , by_value))
 
-            # noinspection PyTypeChecker
-            return HandRanking.FULL_HOUSE, threes + twos, (14-three_index) * 15 + (14-two_index)
+                # noinspection PyTypeChecker
+                return HandRanking.FULL_HOUSE, threes + twos, (14-three_index) * 15 + (14-two_index)
 
-        # 5. Flush
-        suit_groups: dict[Suit, list[Card]] = {suit: [] for suit in Suit}
-        for card in by_value:
-            suit = card.suit
-            suit_groups[suit].append(card)
+            # 5. Flush
+            suit_groups: dict[Suit, list[Card]] = {suit: [] for suit in Suit}
+            for card in by_value:
+                suit = card.suit
+                suit_groups[suit].append(card)
 
-        suit_groups_filtered = {suit: group[:5] for suit, group in suit_groups.items() if len(group) >= 5}
+            suit_groups_filtered = {suit: group[:5] for suit, group in suit_groups.items() if len(group) >= 5}
 
-        if len(suit_groups_filtered) > 0:
-            suit_groups_values: dict[Suit, int] = {suit: (
-                group[0].rank.numeric_value * 15**4 +
-                group[1].rank.numeric_value * 15**3 +
-                group[2].rank.numeric_value * 15**2 +
-                group[3].rank.numeric_value * 15**1 +
-                group[4].rank.numeric_value * 15**0
-            ) for suit, group in suit_groups_filtered.items()}
+            if len(suit_groups_filtered) > 0:
+                suit_groups_values: dict[Suit, int] = {suit: (
+                    group[0].rank.numeric_value * 15**4 +
+                    group[1].rank.numeric_value * 15**3 +
+                    group[2].rank.numeric_value * 15**2 +
+                    group[3].rank.numeric_value * 15**1 +
+                    group[4].rank.numeric_value * 15**0
+                ) for suit, group in suit_groups_filtered.items()}
 
-            suit, value = reduce(lambda prev, next: prev if prev[1] > next[1] else next, suit_groups_values.items())
-            flush = suit_groups_filtered[suit]
+                suit, value = reduce(lambda prev, next: prev if prev[1] > next[1] else next, suit_groups_values.items())
+                flush = suit_groups_filtered[suit]
 
-            # noinspection PyTypeChecker
-            return HandRanking.FLUSH, tuple(flush), flush[0].rank.numeric_value
+                # noinspection PyTypeChecker
+                return HandRanking.FLUSH, tuple(flush), flush[0].rank.numeric_value
 
-        # 6. Straight
-        streak = list()
-        max_rank: Rank = ...
-        for rank in reversed(tuple(Rank)):
-            for suit in Suit:
-                if (this := Card(rank=rank, suit=suit)) in selection:
-                    if len(streak) == 0:
-                        max_rank = rank
+            # 6. Straight
+            streak = list()
+            max_rank: Rank = ...
+            for rank in reversed(tuple(Rank)):
+                for suit in Suit:
+                    if (this := Card(rank=rank, suit=suit)) in selection:
+                        if len(streak) == 0:
+                            max_rank = rank
 
-                    streak.append(this)
+                        streak.append(this)
 
-                    if len(streak) == 5:
-                        # noinspection PyTypeChecker
-                        return HandRanking.STRAIGHT, tuple(streak), max_rank.numeric_value
+                        if len(streak) == 5:
+                            # noinspection PyTypeChecker
+                            return HandRanking.STRAIGHT, tuple(streak), max_rank.numeric_value
 
-                    break
-            else:
-                streak = list()
+                        break
+                else:
+                    streak = list()
 
         # 7. Three of a kind
         if three_index >= 0:
