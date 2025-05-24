@@ -1,6 +1,6 @@
 from functools import cache
 
-from game.card import Card, DECK
+from game.card import Card
 from game.gamewinner import GameWinner
 from game.hand import Hand
 
@@ -10,9 +10,6 @@ class Game:
         self.player1 = player1
         self.player2 = player2
         self.card = card
-
-        # Deck
-        self.deck = tuple(DECK.difference({*player1, *player2, card}))
 
         # Round 1
         self.hand1round1 = Hand(*player1)

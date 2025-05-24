@@ -28,4 +28,4 @@ class Card:
         }
 
 
-DECK = frozenset(map(lambda k: Card(*k), itertools.product(Rank, Suit)))
+DECK = tuple(map(lambda k: Card(*k), itertools.product(Rank, Suit)))

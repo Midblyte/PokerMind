@@ -41,7 +41,7 @@ _ROYAL_FLUSHES: dict[Suit, set[Card]] = {
 
 class Hand:
     def __init__(self, *cards: Unpack[Card]):
-        self.cards = frozenset(cards)
+        self.cards = cards
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Hand):
@@ -79,7 +79,7 @@ class Hand:
 
     @staticmethod
     @cache
-    def _catalog(cards: frozenset[Card]) -> tuple[HandRanking, tuple[Card], int]:
+    def _catalog(cards: tuple[Card]) -> tuple[HandRanking, tuple[Card], int]:
         if (number_of_cards := len(cards)) == 0:
             raise ValueError
 
@@ -215,12 +215,10 @@ class Hand:
         return HandRanking.HIGH_CARD, (high_card, ), high_card.rank.numeric_value
 
     def _analyse(self) -> tuple[HandRanking, set[Card], int, tuple[Card]]:
-        copy = frozenset(self.cards)
-
-        ranking, cards, value = Hand._catalog(copy)
+        ranking, cards, value = Hand._catalog(self.cards)
 
         # noinspection PyTypeChecker
-        kickers: tuple[Card] = tuple(sorted(copy.difference(cards), reverse=True))
+        kickers: tuple[Card] = tuple(sorted((card for card in self.cards if card not in cards), reverse=True))
 
         return ranking, cards, value, kickers
 

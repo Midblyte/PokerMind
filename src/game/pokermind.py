@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 import time
-from random import sample as random_sample, shuffle as random_shuffle
+from random import sample as random_sample
 from multiprocessing import Process, Queue, Lock
 from typing import Optional
 
@@ -19,14 +19,6 @@ class PokerMind:
         self.lock = Lock()
 
         self.game: Game = ...
-
-    @staticmethod
-    def _shuffle(full_deck: frozenset[Card]) -> list[Card]:
-        deck = list(DECK)
-
-        random_shuffle(deck)
-
-        return deck
 
     def show(self) -> Game:
         with self.lock:
@@ -91,9 +83,7 @@ class PokerMind:
 
     def _find(self, queue: Queue, iterations: int = 5000) -> Optional[Game]:
         for i in range(iterations):
-            deck = self._shuffle(DECK)
-
-            sample = tuple(random_sample(deck, 9))
+            sample = random_sample(DECK, 9)
 
             player1 = tuple(sorted(sample[0:4], key=lambda k: k.rank.numeric_value))
             player2 = tuple(sorted(sample[4:8], key=lambda k: k.rank.numeric_value))
