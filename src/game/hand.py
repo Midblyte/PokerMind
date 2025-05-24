@@ -139,11 +139,11 @@ class Hand:
         if at_least_five:
             # 4. Full House
             if three_index >= 0 and two_index >= 0:
-                threes = tuple(filter(lambda card: card.rank.numeric_value == 14 - three_index, by_value))
-                twos   = tuple(filter(lambda card: card.rank.numeric_value == 14 - two_index  , by_value))
+                threes = tuple(filter(lambda card: card.rank.numeric_value == 12 - three_index, by_value))
+                twos   = tuple(filter(lambda card: card.rank.numeric_value == 12 - two_index  , by_value))
 
                 # noinspection PyTypeChecker
-                return HandRanking.FULL_HOUSE, threes + twos, (14-three_index) * 15 + (14-two_index)
+                return HandRanking.FULL_HOUSE, threes + twos, (12-three_index) * 13 + (12-two_index)
 
             # 5. Flush
             suit_groups: dict[Suit, list[Card]] = {suit: [] for suit in Suit}
@@ -155,11 +155,11 @@ class Hand:
 
             if len(suit_groups_filtered) > 0:
                 suit_groups_values: dict[Suit, int] = {suit: (
-                    group[0].rank.numeric_value * 15**4 +
-                    group[1].rank.numeric_value * 15**3 +
-                    group[2].rank.numeric_value * 15**2 +
-                    group[3].rank.numeric_value * 15**1 +
-                    group[4].rank.numeric_value * 15**0
+                    group[0].rank.numeric_value * 13**4 +
+                    group[1].rank.numeric_value * 13**3 +
+                    group[2].rank.numeric_value * 13**2 +
+                    group[3].rank.numeric_value * 13**1 +
+                    group[4].rank.numeric_value * 13**0
                 ) for suit, group in suit_groups_filtered.items()}
 
                 suit, value = reduce(lambda prev, next: prev if prev[1] > next[1] else next, suit_groups_values.items())
@@ -189,27 +189,27 @@ class Hand:
 
         # 7. Three of a kind
         if three_index >= 0:
-            threes = tuple(filter(lambda card: card.rank.numeric_value == 14 - three_index, by_value))
+            threes = tuple(filter(lambda card: card.rank.numeric_value == 12 - three_index, by_value))
 
             # noinspection PyTypeChecker
-            return HandRanking.THREE_OF_A_KIND, threes, 14-three_index
+            return HandRanking.THREE_OF_A_KIND, threes, 12-three_index
 
         # 8. Two Pair
         second_two_index = count.index(2, two_index + 1) if 2 in count[two_index+1:] else -1
 
         if two_index >= 0 and second_two_index >= 0:
-            twos        = tuple(filter(lambda card: card.rank.numeric_value == 14 - two_index       , by_value))
-            second_twos = tuple(filter(lambda card: card.rank.numeric_value == 14 - second_two_index, by_value))
+            twos        = tuple(filter(lambda card: card.rank.numeric_value == 12 - two_index       , by_value))
+            second_twos = tuple(filter(lambda card: card.rank.numeric_value == 12 - second_two_index, by_value))
 
             # noinspection PyTypeChecker
-            return HandRanking.TWO_PAIR, twos + second_twos, (14-two_index) * 15 + (14-second_two_index)
+            return HandRanking.TWO_PAIR, twos + second_twos, (12-two_index) * 13 + (12-second_two_index)
 
         # 9. Pair
         if two_index >= 0:
-            twos = tuple(filter(lambda card: card.rank.numeric_value == 14 - two_index, by_value))
+            twos = tuple(filter(lambda card: card.rank.numeric_value == 12 - two_index, by_value))
 
             # noinspection PyTypeChecker
-            return HandRanking.PAIR, twos, 14-two_index
+            return HandRanking.PAIR, twos, 12-two_index
 
         # 10. High Card
         high_card: Card = by_number.pop(0)
