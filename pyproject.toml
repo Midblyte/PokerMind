@@ -1,6 +1,6 @@
 [project]
 name = "pokermind"
-version = "0.3.1"
+version = "0.4.0"
 description = "PokerMind Client-Server"
 readme = "README.md"
 authors = [{"name" = "Midblyte"}, {"name" = "AngelogyPythITA"}, {"name" = "Sauz926"}]
