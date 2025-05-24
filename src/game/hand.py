@@ -7,6 +7,38 @@ from game.rank import Rank
 from game.suit import Suit
 
 
+_ROYAL_FLUSHES: dict[Suit, set[Card]] = {
+    Suit.HEARTS: {
+        Card(rank=Rank.ACE,   suit=Suit.HEARTS),
+        Card(rank=Rank.KING,  suit=Suit.HEARTS),
+        Card(rank=Rank.QUEEN, suit=Suit.HEARTS),
+        Card(rank=Rank.JACK,  suit=Suit.HEARTS),
+        Card(rank=Rank.TEN,   suit=Suit.HEARTS)
+    },
+    Suit.DIAMONDS: {
+        Card(rank=Rank.ACE,   suit=Suit.DIAMONDS),
+        Card(rank=Rank.KING,  suit=Suit.DIAMONDS),
+        Card(rank=Rank.QUEEN, suit=Suit.DIAMONDS),
+        Card(rank=Rank.JACK,  suit=Suit.DIAMONDS),
+        Card(rank=Rank.TEN,   suit=Suit.DIAMONDS)
+    },
+    Suit.CLUBS: {
+        Card(rank=Rank.ACE,   suit=Suit.CLUBS),
+        Card(rank=Rank.KING,  suit=Suit.CLUBS),
+        Card(rank=Rank.QUEEN, suit=Suit.CLUBS),
+        Card(rank=Rank.JACK,  suit=Suit.CLUBS),
+        Card(rank=Rank.TEN,   suit=Suit.CLUBS)
+    },
+    Suit.SPADES: {
+        Card(rank=Rank.ACE,   suit=Suit.SPADES),
+        Card(rank=Rank.KING,  suit=Suit.SPADES),
+        Card(rank=Rank.QUEEN, suit=Suit.SPADES),
+        Card(rank=Rank.JACK,  suit=Suit.SPADES),
+        Card(rank=Rank.TEN,   suit=Suit.SPADES)
+    }
+}
+
+
 class Hand:
     def __init__(self, *cards: Unpack[Card]):
         self.cards = tuple(cards)
@@ -59,15 +91,12 @@ class Hand:
 
         # 1. Royal flush
         for suit in Suit:
-            royal_flush: tuple = (
-                Card(rank=Rank.ACE,   suit=suit),
-                Card(rank=Rank.KING,  suit=suit),
-                Card(rank=Rank.QUEEN, suit=suit),
-                Card(rank=Rank.JACK,  suit=suit),
-                Card(rank=Rank.TEN,   suit=suit),
-            )
+            royal_flush_set: set = _ROYAL_FLUSHES[suit]
 
-            if all((card in selection for card in royal_flush)):
+            if all((card in selection for card in royal_flush_set)):
+                royal_flush = tuple(sorted(royal_flush_set, key=lambda k: k.rank.numeric_value, reverse=True))
+
+                # noinspection PyTypeChecker
                 return HandRanking.ROYAL_FLUSH, royal_flush, 0
 
         # 2. Straight flush
