@@ -5,12 +5,12 @@ from random import sample as random_sample
 
 from log import logger
 # noinspection PyUnresolvedReferences, PyProtectedMember
-if sys.implementation.name == "pypy" or sys.version_info > (3, 14) or (sys.version_info > (3, 12) and sys._is_gil_enabled()):  # No GIL
-    logger.debug("Using threading (assuming no GIL)")
-    from threading import Thread as Task, Lock
-else:
+if getattr(sys, "_is_gil_enabled", None) is None or sys._is_gil_enabled():
     logger.debug("Using multiprocessing (assuming GIL)")
     from multiprocessing import Process as Task, Lock
+else:  # No GIL
+    logger.debug("Using threading (assuming no GIL)")
+    from threading import Thread as Task, Lock
 from multiprocessing import Queue
 from typing import Optional
 
