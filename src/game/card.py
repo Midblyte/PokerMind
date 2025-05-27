@@ -1,4 +1,5 @@
 import itertools
+from typing import Final
 
 from game.rank import Rank
 from game.suit import Suit
@@ -28,4 +29,4 @@ class Card:
         }
 
 
-DECK = tuple(map(lambda k: Card(*k), itertools.product(Rank, Suit)))
+DECK: Final[tuple[Card, ...]] = tuple(map(lambda k: Card(*k), itertools.product(Rank, Suit)))

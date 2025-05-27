@@ -86,7 +86,6 @@ class PokerMind:
 
             card = sample[8]
 
-            # noinspection PyTypeChecker
             game = Game(player1, player2, card)
 
             hands = game.hand1round1, game.hand1round2, game.hand2round1, game.hand2round2

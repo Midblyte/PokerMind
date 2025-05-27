@@ -14,7 +14,7 @@ from game.rank import Rank
 _BUFFER_SIZE = 1024
 
 
-def run_function(connection: socket, skeleton: "Skeleton"):
+def run_function(connection: socket.socket, skeleton: "Skeleton"):
     data = json.loads(connection.recv(_BUFFER_SIZE).decode("utf-8"))
 
     action = data.get("action")

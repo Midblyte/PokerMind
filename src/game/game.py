@@ -40,7 +40,6 @@ class Game:
             return GameWinner.P2
 
     def __repr__(self):
-        h1r1, h2r1 = self.player1, self.player2
         r1, r2 = self.round1, self.round2
         r1t = f"{r1.name} wins" if r1 is not GameWinner.TIE else "Tie"
         r2t = f"{r2.name} wins" if r2 is not GameWinner.TIE else "Tie"
