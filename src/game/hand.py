@@ -78,7 +78,6 @@ class Hand:
             return False
 
     @staticmethod
-    @cache
     def _catalog(cards: tuple[Card, ...]) -> tuple[HandRanking, tuple[Card, ...], int]:
         if (number_of_cards := len(cards)) == 0:
             raise ValueError
