@@ -1,4 +1,4 @@
-from functools import reduce, cache
+from functools import reduce
 from typing import Unpack
 
 from game.card import Card
@@ -51,7 +51,7 @@ class Hand:
         hand_ranking2, _, value2, kickers2 = other._analyse()
 
         return hand_ranking1 == hand_ranking2 and value1 == value2 and all((
-            Hand(k1) == Hand(k2) for k1, k2 in zip(kickers1, kickers2)
+            k1.rank == k2.rank for k1, k2 in zip(kickers1, kickers2)
         ))
 
     def __gt__(self, other) -> bool:
@@ -68,12 +68,10 @@ class Hand:
             return value1 > value2
 
         for k1, k2 in zip(kickers1, kickers2):
-            hk1, hk2 = Hand(k1), Hand(k2)
-
-            if hk1 == hk2:
+            if k1.rank == k2.rank:
                 continue
 
-            return hk1 > hk2
+            return k1.rank > k2.rank
         else:
             return False
 
@@ -99,7 +97,7 @@ class Hand:
             for suit in Suit:
                 streak = []
                 max_rank: Rank = ...
-                for rank in reversed(tuple(Rank)):
+                for rank in reversed(Rank):
                     if (this := Card(rank=rank, suit=suit)) in cards:
                         if len(streak) == 0:
                             max_rank = rank
@@ -114,28 +112,25 @@ class Hand:
                         max_rank = ...
 
         # 3. Four of a kind
-        for rank in sorted(list(Rank), reverse=True):
+        for rank in sorted(Rank, reverse=True):
             four_of_a_kind: tuple = tuple(Card(rank=rank, suit=suit) for suit in Suit)
 
             if all((card in cards for card in four_of_a_kind)):
                 return HandRanking.FOUR_OF_A_KIND, four_of_a_kind, rank.numeric_value
 
-        count = []  # A, K, Q, ..., 3, 2
         ranks: list[Rank] = [card.rank for card in by_value]
+        count = [ranks.count(rank) for rank in reversed(Rank)]  # A, K, Q, ..., 3, 2
 
-        for rank in sorted(list(Rank), reverse=True):
-            count.append(ranks.count(rank))
-
-        three_index = count.index(3) if 3 in count else -1
-        two_index = count.index(2) if 2 in count else -1
+        three_index = 12 - count.index(3) if 3 in count else -1
+        two_index = 12 - count.index(2) if 2 in count else -1
 
         if at_least_five:
             # 4. Full House
             if three_index >= 0 and two_index >= 0:
-                threes = tuple(filter(lambda card: card.rank.numeric_value == 12 - three_index, by_value))
-                twos   = tuple(filter(lambda card: card.rank.numeric_value == 12 - two_index  , by_value))
+                threes = tuple(filter(lambda card: card.rank.numeric_value == three_index, by_value))
+                twos   = tuple(filter(lambda card: card.rank.numeric_value == two_index  , by_value))
 
-                return HandRanking.FULL_HOUSE, threes + twos, (12-three_index) * 13 + (12-two_index)
+                return HandRanking.FULL_HOUSE, threes + twos, three_index * 13 + two_index
 
             # 5. Flush
             suit_groups: dict[Suit, list[Card]] = {suit: [] for suit in Suit}
@@ -179,24 +174,24 @@ class Hand:
 
         # 7. Three of a kind
         if three_index >= 0:
-            threes = tuple(filter(lambda card: card.rank.numeric_value == 12 - three_index, by_value))
+            threes = tuple(filter(lambda card: card.rank.numeric_value == three_index, by_value))
 
-            return HandRanking.THREE_OF_A_KIND, threes, 12-three_index
+            return HandRanking.THREE_OF_A_KIND, threes, three_index
 
         # 8. Two Pair
-        second_two_index = count.index(2, two_index + 1) if 2 in count[two_index+1:] else -1
+        second_two_index = 12 - count.index(2, 12 - two_index + 1) if 2 in count[12 - two_index+1:] else -1
 
         if two_index >= 0 and second_two_index >= 0:
-            twos        = tuple(filter(lambda card: card.rank.numeric_value == 12 - two_index       , by_value))
-            second_twos = tuple(filter(lambda card: card.rank.numeric_value == 12 - second_two_index, by_value))
+            twos        = tuple(filter(lambda card: card.rank.numeric_value == two_index       , by_value))
+            second_twos = tuple(filter(lambda card: card.rank.numeric_value == second_two_index, by_value))
 
-            return HandRanking.TWO_PAIR, twos + second_twos, (12-two_index) * 13 + (12-second_two_index)
+            return HandRanking.TWO_PAIR, twos + second_twos, two_index * 13 + second_two_index
 
         # 9. Pair
         if two_index >= 0:
-            twos = tuple(filter(lambda card: card.rank.numeric_value == 12 - two_index, by_value))
+            twos = tuple(filter(lambda card: card.rank.numeric_value == two_index, by_value))
 
-            return HandRanking.PAIR, twos, 12-two_index
+            return HandRanking.PAIR, twos, two_index
 
         # 10. High Card
         high_card: Card = reduce(lambda prev, next: prev if prev > next else next, cards)
