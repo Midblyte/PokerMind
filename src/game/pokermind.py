@@ -60,7 +60,7 @@ class PokerMind:
             # logger.info("Generating...")
             start = time.time()
 
-            while (game := self._find()) is None:
+            while (game := self._find(iterations=1000 * self.threshold)) is None:
                 logger.warning(f"Timed out, lowering threshold from {self.threshold} to {self.threshold - 1}")
 
                 self.threshold -= 1
@@ -70,7 +70,7 @@ class PokerMind:
 
             self.games.put(game)
 
-    def _find(self, iterations: int = 5000) -> Optional[Game]:
+    def _find(self, iterations: int) -> Optional[Game]:
         for i in range(iterations):
             sample = random_sample(DECK, 9)
 
