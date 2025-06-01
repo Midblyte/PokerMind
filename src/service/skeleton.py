@@ -4,6 +4,7 @@ import socket
 from game.game import Game
 from game.guess import Guess
 from service.interface import Interface
+from service.concurrency import Task
 from log import logger
 from game.pokermind import PokerMind
 from game.card import Card
@@ -15,7 +16,16 @@ _BUFFER_SIZE = 1024
 
 
 def run_function(connection: socket.socket, skeleton: "Skeleton"):
-    data = json.loads(connection.recv(_BUFFER_SIZE).decode("utf-8"))
+    try:
+        rcv = connection.recv(_BUFFER_SIZE)
+    except ConnectionResetError as _ignored:
+        return
+
+    if rcv == b"":  # Client closed connection.
+        connection.close()
+        return
+
+    data = json.loads(rcv.decode("utf-8"))
 
     action = data.get("action")
 
@@ -99,8 +109,12 @@ def run_function(connection: socket.socket, skeleton: "Skeleton"):
     payload = json.dumps({"ok": ok, "data": response}).encode("utf-8")
 
     connection.send(payload)
-    
-    connection.close()
+
+
+def _handle(connection: socket.socket, skeleton: "Skeleton"):
+    # noinspection PyUnresolvedReferences,PyProtectedMember
+    while not connection._closed:
+        run_function(connection, skeleton)
 
 
 class Skeleton(Interface):
@@ -123,11 +137,13 @@ class Skeleton(Interface):
     def run(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         try:
             s.bind(("127.0.0.1", self.port))
         except OSError as error:
             logger.error("Bind error", exc_info=error)
             exit(1)
+
         s.listen(1)
 
         logger.info(f"Listening on {s.getsockname()}")
@@ -136,4 +152,4 @@ class Skeleton(Interface):
         while True:
             connection, address = s.accept()
 
-            run_function(connection, self)
+            Task(target=_handle, args=(connection, self), daemon=True).start()

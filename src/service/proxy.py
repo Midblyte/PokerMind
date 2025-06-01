@@ -11,18 +11,14 @@ _BUFFER_SIZE = 1024
 
 class Proxy(Interface):
     def __init__(self, port: int):
-        self.port = port
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.connect(("127.0.0.1", port))
 
     def _request(self, **kwargs) -> tuple[bool, Any]:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("127.0.0.1", self.port))
-
         # Send
-        s.send(json.dumps(kwargs).encode("utf-8"))
+        self._socket.send(json.dumps(kwargs).encode("utf-8"))
         # Receive
-        data = s.recv(_BUFFER_SIZE)
-
-        s.close()
+        data = self._socket.recv(_BUFFER_SIZE)
 
         returned = json.loads(data.decode("utf-8"))
         ok = returned["ok"]
@@ -47,3 +43,6 @@ class Proxy(Interface):
 
     def new_game(self):
         return self._request(action="new_game")
+
+    def close(self):
+        self._socket.close()

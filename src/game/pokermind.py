@@ -1,22 +1,15 @@
 import os
-import sys
 import time
 from random import sample as random_sample
 
 from log import logger
-# noinspection PyUnresolvedReferences, PyProtectedMember
-if getattr(sys, "_is_gil_enabled", None) is None or sys._is_gil_enabled():
-    logger.debug("Using multiprocessing (assuming GIL)")
-    from multiprocessing import Process as Task, Lock
-else:  # No GIL
-    logger.debug("Using threading (assuming no GIL)")
-    from threading import Thread as Task, Lock
 from multiprocessing import Queue
 from typing import Optional
 
 from game.card import Card, DECK
 from game.game import Game
 from game.guess import Guess
+from service.concurrency import Task, Lock
 
 
 class PokerMind:

@@ -51,8 +51,10 @@ def main():
                     ok = training(proxy, args.numerical)
 
                     if not ok:
+                        proxy.close()
                         exit(1)
                 else:
+                    proxy.close()
                     exit(0)
             else:
                 ok, data = proxy.reveal()
@@ -67,19 +69,21 @@ def main():
             ok, data = proxy.guess(card)
         case _:
             parser.print_help()
+            proxy.close()
             exit(1)
 
     print(json.dumps(data, indent=4))
+
+    proxy.close()
 
     exit(0 if ok else 1)
 
 
 def training(proxy: Proxy, numerical: bool) -> bool:
-    ok_reveal,   data_reveal   = proxy.reveal()
-    ok_show,     data_show     = proxy.show()
     ok_new_game, data_new_game = proxy.new_game()
+    ok_reveal,   data_reveal   = proxy.reveal()
 
-    if not (ok_reveal and ok_show and ok_new_game):
+    if not (ok_new_game and ok_reveal):
         return False
 
     key = "value" if numerical else "result"
@@ -88,31 +92,31 @@ def training(proxy: Proxy, numerical: bool) -> bool:
         # Input
 
         # Unrolled version:
-        #   data_show[player][n][kind]["value"]
+        #   data_new_game[player][n][kind]["value"]
         #   for player in ("player1", "player2")
         #   for n in range(4)
         #   for kind in ("rank", "suit")
 
-        data_show["player1"][0]["rank"][key],
-        data_show["player1"][0]["suit"][key],
-        data_show["player1"][1]["rank"][key],
-        data_show["player1"][1]["suit"][key],
-        data_show["player1"][2]["rank"][key],
-        data_show["player1"][2]["suit"][key],
-        data_show["player1"][3]["rank"][key],
-        data_show["player1"][3]["suit"][key],
+        data_new_game["player1"][0]["rank"][key],
+        data_new_game["player1"][0]["suit"][key],
+        data_new_game["player1"][1]["rank"][key],
+        data_new_game["player1"][1]["suit"][key],
+        data_new_game["player1"][2]["rank"][key],
+        data_new_game["player1"][2]["suit"][key],
+        data_new_game["player1"][3]["rank"][key],
+        data_new_game["player1"][3]["suit"][key],
 
-        data_show["player2"][0]["rank"][key],
-        data_show["player2"][0]["suit"][key],
-        data_show["player2"][1]["rank"][key],
-        data_show["player2"][1]["suit"][key],
-        data_show["player2"][2]["rank"][key],
-        data_show["player2"][2]["suit"][key],
-        data_show["player2"][3]["rank"][key],
-        data_show["player2"][3]["suit"][key],
+        data_new_game["player2"][0]["rank"][key],
+        data_new_game["player2"][0]["suit"][key],
+        data_new_game["player2"][1]["rank"][key],
+        data_new_game["player2"][1]["suit"][key],
+        data_new_game["player2"][2]["rank"][key],
+        data_new_game["player2"][2]["suit"][key],
+        data_new_game["player2"][3]["rank"][key],
+        data_new_game["player2"][3]["suit"][key],
 
-        data_show["round1"][key],
-        data_show["round2"][key],
+        data_new_game["round1"][key],
+        data_new_game["round2"][key],
 
         # Output
 
