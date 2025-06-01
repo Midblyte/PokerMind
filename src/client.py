@@ -24,7 +24,7 @@ def main():
     reveal_parser = subparsers.add_parser("reveal")
     reveal_parser.set_defaults(action="reveal")
 
-    reveal_parser.add_argument("--training-mode", "-T", type=int, const=100, default=False, nargs='?', metavar="ITERATIONS", help="output as CSV and create a new game", dest="training")
+    reveal_parser.add_argument("--training-mode", "-T", type=int, const=100, default=False, nargs='?', metavar="ITERATIONS = 100", help="output as CSV and create that many new games", dest="training")
     reveal_parser.add_argument("--numerical", action="store_true", help="numerical output (requires training mode)")
 
     guess_parser = subparsers.add_parser("guess")
